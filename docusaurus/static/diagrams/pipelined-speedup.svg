@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500" viewBox="0 0 800 500">
+  <defs>
+    <style>
+      .axis { stroke: #333; stroke-width: 2; }
+      .gridline { stroke: #ddd; stroke-width: 1; }
+      .bar-sequential { fill: #FF9999; stroke: #cc0000; stroke-width: 2; }
+      .bar-pipelined { fill: #99CC99; stroke: #00cc00; stroke-width: 2; }
+      .label { font-family: Arial, sans-serif; font-size: 14px; font-weight: bold; text-anchor: middle; }
+      .title { font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; }
+      .value-label { font-family: monospace; font-size: 12px; font-weight: bold; }
+      .annotation { font-family: Arial; font-size: 14px; font-weight: bold; fill: #333; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="400" y="30" class="title" text-anchor="middle">Sequential vs. Pipelined: 16 Requests Over 10ms-Latency Link</text>
+
+  <!-- Y-axis -->
+  <line x1="80" y1="400" x2="80" y2="50" class="axis"/>
+  <!-- X-axis -->
+  <line x1="80" y1="400" x2="750" y2="400" class="axis"/>
+
+  <!-- Grid lines -->
+  <line x1="80" y1="350" x2="750" y2="350" class="gridline"/>
+  <line x1="80" y1="300" x2="750" y2="300" class="gridline"/>
+  <line x1="80" y1="250" x2="750" y2="250" class="gridline"/>
+  <line x1="80" y1="200" x2="750" y2="200" class="gridline"/>
+  <line x1="80" y1="150" x2="750" y2="150" class="gridline"/>
+  <line x1="80" y1="100" x2="750" y2="100" class="gridline"/>
+
+  <!-- Y-axis labels (ms) -->
+  <text x="60" y="405" class="label" font-size="11">0</text>
+  <text x="60" y="355" class="label" font-size="11">50</text>
+  <text x="60" y="305" class="label" font-size="11">100</text>
+  <text x="60" y="255" class="label" font-size="11">150</text>
+
+  <!-- Bars -->
+  <rect x="150" y="160" width="100" height="240" class="bar-sequential"/>
+  <rect x="350" y="360" width="100" height="40" class="bar-pipelined"/>
+
+  <!-- Bar labels -->
+  <text x="200" y="420" class="label">Sequential</text>
+  <text x="400" y="420" class="label">Pipelined</text>
+
+  <!-- Value labels -->
+  <text x="200" y="150" class="value-label" text-anchor="middle">160ms</text>
+  <text x="400" y="350" class="value-label" text-anchor="middle">20ms</text>
+
+  <!-- Speedup annotation -->
+  <rect x="250" y="200" width="200" height="80" fill="yellow" opacity="0.2" stroke="#ff9900" stroke-width="2" rx="5"/>
+  <text x="350" y="230" class="annotation" text-anchor="middle">8x</text>
+  <text x="350" y="255" class="annotation" font-size="12" text-anchor="middle">Speedup</text>
+
+  <!-- Y-axis label -->
+  <text x="15" y="220" class="label" font-size="12">Time (ms)</text>
+</svg>

@@ -1,0 +1,99 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            compiler: gcc
+            cc: gcc-11
+            cxx: g++-11
+          - os: ubuntu-22.04
+            compiler: gcc
+            cc: gcc-12
+            cxx: g++-12
+          - os: ubuntu-22.04
+            compiler: clang
+            cc: clang-14
+            cxx: clang++-14
+          - os: ubuntu-24.04
+            compiler: gcc
+            cc: gcc-13
+            cxx: g++-13
+          - os: ubuntu-24.04
+            compiler: clang
+            cc: clang-17
+            cxx: clang++-17
+
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.cxx }} (${{ matrix.os }})
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev ${{ matrix.cc }} ${{ matrix.cxx }}
+
+      - name: Configure
+        env:
+          CC: ${{ matrix.cc }}
+          CXX: ${{ matrix.cxx }}
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Release
+          -DMODBUS_PP_BUILD_TESTS=ON
+          -DMODBUS_PP_BUILD_BENCHMARKS=ON
+          -DMODBUS_PP_BUILD_EXAMPLES=ON
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: cd build && ctest --output-on-failure -j$(nproc)
+
+  sanitizers:
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [asan, tsan]
+        include:
+          - sanitizer: asan
+            cmake_flag: MODBUS_PP_ENABLE_ASAN
+          - sanitizer: tsan
+            cmake_flag: MODBUS_PP_ENABLE_TSAN
+
+    name: ${{ matrix.sanitizer }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libssl-dev
+
+      - name: Configure
+        run: >
+          cmake -B build
+          -DCMAKE_BUILD_TYPE=Debug
+          -DMODBUS_PP_BUILD_TESTS=ON
+          -DMODBUS_PP_BUILD_BENCHMARKS=OFF
+          -DMODBUS_PP_BUILD_EXAMPLES=OFF
+          -D${{ matrix.cmake_flag }}=ON
+
+      - name: Build
+        run: cmake --build build -j$(nproc)
+
+      - name: Test
+        run: cd build && ctest --output-on-failure -j$(nproc)

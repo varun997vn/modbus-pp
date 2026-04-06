@@ -1,0 +1,33 @@
+{
+  "name": "modbus_pp-docs",
+  "version": "1.0.0",
+  "description": "Documentation for modbus_pp - Modern C++17 Modbus Library",
+  "homepage": "https://github.com/varuvenk/modbus_pp",
+  "license": "MIT",
+  "scripts": {
+    "docusaurus": "docusaurus",
+    "start": "docusaurus start",
+    "build": "docusaurus build",
+    "swizzle": "docusaurus swizzle",
+    "deploy": "docusaurus deploy",
+    "clear": "docusaurus clear",
+    "serve": "docusaurus serve",
+    "write-translations": "docusaurus write-translations",
+    "write-heading-ids": "docusaurus write-heading-ids"
+  },
+  "dependencies": {
+    "@docusaurus/core": "^3.0.1",
+    "@docusaurus/preset-classic": "^3.0.1",
+    "@docusaurus/types": "^3.0.1",
+    "clsx": "^2.0.0",
+    "prism-react-renderer": "^2.3.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@mdx-js/react": "^3.0.0"
+  },
+  "engines": {
+    "node": ">=18.0"
+  }
+}

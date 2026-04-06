@@ -1,0 +1,127 @@
+/**
+ * Any CSS included here will be global. The classic template
+ * bundles Infima by default. Infima is a simple framework built on top of it.
+ * If you want to override Infima variables, an overview of them is available at:
+ * https://infima.dev/docs/reference/numerics/colors
+ */
+
+:root {
+  --ifm-color-primary: #1e90ff;
+  --ifm-color-primary-dark: #1877cc;
+  --ifm-color-primary-darker: #1569c9;
+  --ifm-color-primary-darkest: #0d47a1;
+  --ifm-color-primary-light: #378dfd;
+  --ifm-color-primary-lighter: #5aa0ff;
+  --ifm-color-primary-lightest: #7ab8ff;
+  --ifm-code-font-size: 95%;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.1);
+}
+
+/* For readability concerns, you should choose a lighter palette in dark mode. */
+[data-theme="dark"] {
+  --ifm-color-primary: #4da6ff;
+  --ifm-color-primary-dark: #3d95ff;
+  --ifm-color-primary-darker: #3591ff;
+  --ifm-color-primary-darkest: #1e6dd9;
+  --ifm-color-primary-light: #5db3ff;
+  --ifm-color-primary-lighter: #6fbcff;
+  --ifm-color-primary-lightest: #8fcbff;
+  --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Custom styling */
+.docusaurus-highlight-code-line {
+  background-color: var(--docusaurus-highlighted-code-line-bg);
+  display: block;
+  margin: 0 calc(-1 * var(--ifm-pre-padding));
+  padding: 0 var(--ifm-pre-padding);
+}
+
+/* Hero section styling */
+.hero {
+  background: linear-gradient(135deg, #1e90ff 0%, #4169e1 100%);
+}
+
+.hero h1 {
+  font-size: 3.5rem;
+  font-weight: 900;
+}
+
+/* Feature cards */
+.featureCard {
+  border: 2px solid var(--ifm-color-primary-light);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.featureCard h3 {
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.5rem;
+}
+
+/* Diagram styling */
+.diagram-container {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+  background-color: var(--ifm-background-surface-secondary);
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.diagram-container img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Table styling */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+table thead {
+  background-color: var(--ifm-color-primary);
+  color: white;
+}
+
+table td,
+table th {
+  padding: 0.75rem;
+  text-align: left;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+table tbody tr:hover {
+  background-color: var(--ifm-color-emphasis-100);
+}
+
+/* Code block styling */
+pre {
+  background-color: var(--ifm-pre-background);
+  border-radius: 8px;
+  overflow-x: auto;
+}
+
+/* Callout styling */
+.callout {
+  border-left: 4px solid var(--ifm-color-primary);
+  background-color: var(--ifm-color-emphasis-100);
+  padding: 1rem;
+  border-radius: 4px;
+  margin: 1rem 0;
+}
+
+.callout.info {
+  border-left-color: var(--ifm-color-primary);
+}
+
+.callout.warning {
+  border-left-color: #ff9900;
+}
+
+.callout.success {
+  border-left-color: #28a745;
+}

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="400" viewBox="0 0 1000 400">
+  <defs>
+    <style>
+      .field-box { fill: #E8F4F8; stroke: #333; stroke-width: 2; }
+      .field-label { font-family: monospace; font-size: 12px; font-weight: bold; }
+      .field-size { font-family: monospace; font-size: 10px; fill: #666; }
+      .header-text { font-family: Arial; font-size: 14px; font-weight: bold; }
+      .section-title { font-family: Arial; font-size: 12px; font-weight: bold; fill: #333; }
+    </style>
+  </defs>
+
+  <!-- Title -->
+  <text x="500" y="25" class="header-text" text-anchor="middle">Extended modbus_pp PDU Layout (FC = 0x6E)</text>
+
+  <!-- Standard PDU -->
+  <text x="20" y="65" class="section-title">Standard PDU (backward compatible):</text>
+  
+  <rect x="20" y="80" width="80" height="40" class="field-box"/>
+  <text x="60" y="103" class="field-label" text-anchor="middle">FC</text>
+  <text x="60" y="118" class="field-size" text-anchor="middle">1B</text>
+
+  <rect x="100" y="80" width="200" height="40" class="field-box"/>
+  <text x="200" y="103" class="field-label" text-anchor="middle">Data</text>
+  <text x="200" y="118" class="field-size" text-anchor="middle">0-252 B</text>
+
+  <!-- Extended PDU -->
+  <text x="20" y="175" class="section-title">Extended PDU (modbus_pp):</text>
+
+  <rect x="20" y="190" width="40" height="40" class="field-box" fill="#FFB84D"/>
+  <text x="40" y="213" class="field-label" text-anchor="middle">0x6E</text>
+  <text x="40" y="228" class="field-size" text-anchor="middle">FC</text>
+
+  <rect x="60" y="190" width="40" height="40" class="field-box"/>
+  <text x="80" y="213" class="field-label" text-anchor="middle">Ver</text>
+  <text x="80" y="228" class="field-size" text-anchor="middle">1B</text>
+
+  <rect x="100" y="190" width="50" height="40" class="field-box"/>
+  <text x="125" y="213" class="field-label" text-anchor="middle">Flags</text>
+  <text x="125" y="228" class="field-size" text-anchor="middle">2B</text>
+
+  <rect x="150" y="190" width="60" height="40" class="field-box"/>
+  <text x="180" y="213" class="field-label" text-anchor="middle">CorrID</text>
+  <text x="180" y="228" class="field-size" text-anchor="middle">2B</text>
+
+  <rect x="210" y="190" width="70" height="40" class="field-box" fill="#FFCCCC" opacity="0.7"/>
+  <text x="245" y="213" class="field-label" text-anchor="middle">TS?</text>
+  <text x="245" y="228" class="field-size" text-anchor="middle">8B*</text>
+
+  <rect x="280" y="190" width="50" height="40" class="field-box"/>
+  <text x="305" y="213" class="field-label" text-anchor="middle">ExtFC</text>
+  <text x="305" y="228" class="field-size" text-anchor="middle">1B</text>
+
+  <rect x="330" y="190" width="60" height="40" class="field-box"/>
+  <text x="360" y="213" class="field-label" text-anchor="middle">PayLen</text>
+  <text x="360" y="228" class="field-size" text-anchor="middle">2B</text>
+
+  <rect x="390" y="190" width="150" height="40" class="field-box"/>
+  <text x="465" y="213" class="field-label" text-anchor="middle">Payload</text>
+  <text x="465" y="228" class="field-size" text-anchor="middle">N B</text>
+
+  <rect x="540" y="190" width="80" height="40" class="field-box" fill="#FFCCCC" opacity="0.7"/>
+  <text x="580" y="213" class="field-label" text-anchor="middle">HMAC?</text>
+  <text x="580" y="228" class="field-size" text-anchor="middle">32B*</text>
+
+  <!-- Legend -->
+  <text x="20" y="300" class="section-title">Legend:</text>
+  
+  <text x="20" y="325" font-family="monospace" font-size="11">
+    <tspan>FC = Function Code (0x6E for extended)</tspan>
+    <tspan x="20" dy="18">Ver = Version (currently 1)</tspan>
+    <tspan x="20" dy="18">Flags = Bitmap for TS, HMAC presence</tspan>
+    <tspan x="20" dy="18">CorrID = Correlation ID for pipelining (0x0000-0xFFFF)</tspan>
+    <tspan x="20" dy="18">TS? = Optional timestamp (only if flag set)</tspan>
+    <tspan x="20" dy="18">ExtFC = Extended function code (0x00-0xFF)</tspan>
+    <tspan x="20" dy="18">PayLen = Length of payload in bytes</tspan>
+    <tspan x="20" dy="18">Payload = Extended operation data</tspan>
+    <tspan x="20" dy="18">HMAC? = Optional HMAC-SHA256 digest (only if flag set)</tspan>
+    <tspan x="20" dy="18">* = Only present if corresponding flag is set</tspan>
+  </text>
+</svg>

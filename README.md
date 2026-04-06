@@ -63,28 +63,60 @@ graph LR
 
 ## Table of Contents
 
-- [What is Modbus?](#-what-is-modbus-a-quick-primer)
-- [The 10 Problems We Solve](#-the-10-problems-we-solve)
-- [Architecture](#-architecture)
-- [Wire Format](#-wire-format)
-- [Deep Dive: Solutions](#-deep-dive-the-10-solutions)
-  - [1. Security (HMAC-SHA256)](#1--security--hmac-sha256-authentication)
-  - [2. Rich Data Types](#2--rich-data-types--compile-time-type-safety)
-  - [3. Event-Driven Push](#3--event-driven-push--pubsub-with-dead-band)
-  - [4. Extended Payloads](#4--extended-payloads--break-the-253-byte-limit)
-  - [5. Timestamps](#5--timestamps--microsecond-precision)
-  - [6. Pipelining](#6--pipelining--8x-throughput)
-  - [7. Rich Error Codes](#7--rich-error-codes--stderror_code-integration)
-  - [8. Device Discovery](#8--device-discovery--broadcast-scanning)
-  - [9. Batch Operations](#9--batch-operations--fewer-round-trips)
-  - [10. Byte Order Safety](#10--byte-order-safety--compile-time-endian-selection)
-- [Benchmarks](#-benchmarks)
-- [Comparison: Standard Modbus vs modbus_pp](#-comparison-standard-modbus-vs-modbus_pp)
-- [Quick Start](#-quick-start)
-- [API at a Glance](#-api-at-a-glance)
-- [Design Decisions](#-design-decisions)
-- [Project Structure](#-project-structure)
-- [License](#-license)
+- [modbus\_pp](#modbus_pp)
+    - [Modern C++17 Modbus Library](#modern-c17-modbus-library)
+  - [Table of Contents](#table-of-contents)
+  - [What is Modbus? A Quick Primer](#what-is-modbus-a-quick-primer)
+  - [The 10 Problems We Solve](#the-10-problems-we-solve)
+  - [Architecture](#architecture)
+    - [Module Dependency Graph](#module-dependency-graph)
+    - [Transport Abstraction](#transport-abstraction)
+  - [Wire Format](#wire-format)
+    - [Standard Modbus (Full Backward Compatibility)](#standard-modbus-full-backward-compatibility)
+    - [Extended modbus\_pp Frame (FC = 0x6E)](#extended-modbus_pp-frame-fc--0x6e)
+  - [Deep Dive: The 10 Solutions](#deep-dive-the-10-solutions)
+    - [1. Security — HMAC-SHA256 Authentication](#1-security--hmac-sha256-authentication)
+      - [Session Lifecycle](#session-lifecycle)
+    - [2. Rich Data Types — Compile-Time Type Safety](#2-rich-data-types--compile-time-type-safety)
+      - [Supported Types](#supported-types)
+    - [3. Event-Driven Push — Pub/Sub with Dead-Band](#3-event-driven-push--pubsub-with-dead-band)
+      - [Three Trigger Modes](#three-trigger-modes)
+    - [4. Extended Payloads — Break the 253-Byte Limit](#4-extended-payloads--break-the-253-byte-limit)
+    - [5. Timestamps — Microsecond Precision](#5-timestamps--microsecond-precision)
+    - [6. Pipelining — 8x Throughput](#6-pipelining--8x-throughput)
+    - [7. Rich Error Codes — `std::error_code` Integration](#7-rich-error-codes--stderror_code-integration)
+      - [Result\<T\> Monad — No Exceptions in the Data Path](#resultt-monad--no-exceptions-in-the-data-path)
+    - [8. Device Discovery — Broadcast Scanning](#8-device-discovery--broadcast-scanning)
+      - [Capability Bitfield](#capability-bitfield)
+    - [9. Batch Operations — Fewer Round-Trips](#9-batch-operations--fewer-round-trips)
+    - [10. Byte Order Safety — Compile-Time Endian Selection](#10-byte-order-safety--compile-time-endian-selection)
+  - [Benchmarks](#benchmarks)
+    - [Pipeline vs Sequential Throughput](#pipeline-vs-sequential-throughput)
+    - [Batch vs Individual Round-Trips](#batch-vs-individual-round-trips)
+    - [HMAC-SHA256 Overhead by Payload Size](#hmac-sha256-overhead-by-payload-size)
+    - [PDU Serialization Performance](#pdu-serialization-performance)
+    - [Type Codec Performance Across Byte Orders](#type-codec-performance-across-byte-orders)
+    - [Feature Overhead Breakdown](#feature-overhead-breakdown)
+  - [Comparison: Standard Modbus vs modbus\_pp](#comparison-standard-modbus-vs-modbus_pp)
+  - [Quick Start](#quick-start)
+    - [Prerequisites](#prerequisites)
+    - [Build](#build)
+    - [Run Tests](#run-tests)
+    - [Run Benchmarks](#run-benchmarks)
+    - [Build Options](#build-options)
+    - [Minimal Example — Client/Server with Loopback](#minimal-example--clientserver-with-loopback)
+  - [API at a Glance](#api-at-a-glance)
+  - [Design Decisions](#design-decisions)
+    - [Why No Exceptions in the Data Path?](#why-no-exceptions-in-the-data-path)
+    - [Why `std::variant` Instead of `std::expected`?](#why-stdvariant-instead-of-stdexpected)
+    - [Why OpenSSL Instead of Standalone HMAC?](#why-openssl-instead-of-standalone-hmac)
+    - [Why Function Code 0x6E?](#why-function-code-0x6e)
+    - [Why POSIX Sockets Instead of Boost.Asio?](#why-posix-sockets-instead-of-boostasio)
+    - [Why Custom `span_t` Instead of `gsl::span`?](#why-custom-span_t-instead-of-gslspan)
+    - [Why Static Register Overlap Detection?](#why-static-register-overlap-detection)
+  - [Project Structure](#project-structure)
+  - [Glossary](#glossary)
+  - [License](#license)
 
 ---
 
@@ -136,20 +168,20 @@ mindmap
       Basic error codes
 ```
 
-| # | Standard Modbus Limitation | modbus_pp Solution | Module |
-|:-:|---|---|---|
-| 1 | No security or authentication | HMAC-SHA256 challenge-response with session tokens | `security/` |
-| 2 | Only 16-bit registers (no floats, doubles, strings) | Compile-time typed register descriptors with automatic codec | `register_map/` |
-| 3 | Polling-only (client must ask repeatedly) | Server-push notifications with on-change, threshold, periodic triggers | `pubsub/` |
-| 4 | 253-byte PDU limit | Extended frames with 2-byte payload length field | `core/pdu.hpp` |
-| 5 | No timestamps on data | Microsecond-resolution timestamps (8 bytes) | `core/timestamp.hpp` |
-| 6 | Sequential request/response only | Pipelined transactions with correlation IDs (up to 16 in-flight) | `pipeline/` |
-| 7 | Basic error codes (only 9) | 25+ error codes with `std::error_code` integration and `Result<T>` monad | `core/error.hpp` |
-| 8 | No device discovery | Broadcast scan with capability detection | `discovery/` |
-| 9 | No batch operations | Heterogeneous batch read/write with auto-merging of contiguous ranges | `register_map/batch_request.hpp` |
-| 10 | Ambiguous byte order (vendor guesswork) | Compile-time byte order selection (ABCD/DCBA/BADC/CDAB) via `constexpr if` | `core/endian.hpp` |
+|  #  | Standard Modbus Limitation                          | modbus_pp Solution                                                         | Module                           |
+| :-: | --------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------- |
+|  1  | No security or authentication                       | HMAC-SHA256 challenge-response with session tokens                         | `security/`                      |
+|  2  | Only 16-bit registers (no floats, doubles, strings) | Compile-time typed register descriptors with automatic codec               | `register_map/`                  |
+|  3  | Polling-only (client must ask repeatedly)           | Server-push notifications with on-change, threshold, periodic triggers     | `pubsub/`                        |
+|  4  | 253-byte PDU limit                                  | Extended frames with 2-byte payload length field                           | `core/pdu.hpp`                   |
+|  5  | No timestamps on data                               | Microsecond-resolution timestamps (8 bytes)                                | `core/timestamp.hpp`             |
+|  6  | Sequential request/response only                    | Pipelined transactions with correlation IDs (up to 16 in-flight)           | `pipeline/`                      |
+|  7  | Basic error codes (only 9)                          | 25+ error codes with `std::error_code` integration and `Result<T>` monad   | `core/error.hpp`                 |
+|  8  | No device discovery                                 | Broadcast scan with capability detection                                   | `discovery/`                     |
+|  9  | No batch operations                                 | Heterogeneous batch read/write with auto-merging of contiguous ranges      | `register_map/batch_request.hpp` |
+| 10  | Ambiguous byte order (vendor guesswork)             | Compile-time byte order selection (ABCD/DCBA/BADC/CDAB) via `constexpr if` | `core/endian.hpp`                |
 
-> **Interview Tip**: Modbus is used in 90%+ of industrial control systems. Being able to articulate *why* it's limited and *how* to fix it without breaking compatibility demonstrates deep protocol-level thinking.
+> **Note**: Modbus is used in 90%+ of industrial control systems. Being able to articulate _why_ it's limited and _how_ to fix it without breaking compatibility demonstrates deep protocol-level thinking.
 
 ---
 
@@ -268,7 +300,7 @@ classDiagram
     Transport <|-- LoopbackTransport
 ```
 
-> **Interview Tip**: The Transport abstraction enables testability without hardware. `LoopbackTransport::create_pair()` gives you two linked endpoints — data sent on one appears at the other, with configurable latency and error injection. This is how all benchmarks run without physical Modbus devices.
+> **Note**: The Transport abstraction enables testability without hardware. `LoopbackTransport::create_pair()` gives you two linked endpoints — data sent on one appears at the other, with configurable latency and error injection. This is how all benchmarks run without physical Modbus devices.
 
 ---
 
@@ -322,7 +354,7 @@ graph LR
     style F3 fill:#F0AD4E,stroke:#C89333,color:#fff
 ```
 
-> **Interview Tip**: Choosing FC 0x6E is a deliberate protocol design decision. The Modbus spec reserves 0x41–0x48 and 0x64–0x6E for user-defined functions. By using a single escape code with sub-function codes, we avoid polluting the function code space while supporting unlimited extension types.
+> **Note**: Choosing FC 0x6E is a deliberate protocol design decision. The Modbus spec reserves 0x41–0x48 and 0x64–0x6E for user-defined functions. By using a single escape code with sub-function codes, we avoid polluting the function code space while supporting unlimited extension types.
 
 ---
 
@@ -398,12 +430,13 @@ if (session) {
 ```
 
 **Security properties**:
+
 - **Constant-time HMAC verification** — prevents timing side-channel attacks
 - **Nonce-based** — prevents replay attacks
 - **Session keys** — derived from handshake, not the long-term secret
 - **OpenSSL-backed** — audited, hardware-accelerated HMAC-SHA256
 
-> **Interview Tip**: The constant-time comparison is critical. A naive `memcmp` leaks information about which byte failed first, allowing an attacker to brute-force the HMAC one byte at a time. OpenSSL's `CRYPTO_memcmp` takes the same time regardless of where the mismatch occurs.
+> **Note**: The constant-time comparison is critical. A naive `memcmp` leaks information about which byte failed first, allowing an attacker to brute-force the HMAC one byte at a time. OpenSSL's `CRYPTO_memcmp` takes the same time regardless of where the mismatch occurs.
 
 ---
 
@@ -504,7 +537,7 @@ struct no_overlaps {
 // Build fails with: "Register descriptors have overlapping address ranges"
 ```
 
-> **Interview Tip**: This is a zero-cost abstraction. `constexpr if` dispatches byte order at compile time — the generated assembly is a single, optimal byte-swap instruction sequence. No vtable, no switch/case, no runtime cost. The template recursion for overlap detection happens entirely at compile time.
+> **Note**: This is a zero-cost abstraction. `constexpr if` dispatches byte order at compile time — the generated assembly is a single, optimal byte-swap instruction sequence. No vtable, no switch/case, no runtime cost. The template recursion for overlap detection happens entirely at compile time.
 
 ---
 
@@ -594,7 +627,7 @@ client.subscriber().on_event(sub_id, [](const EventNotification& evt) {
 });
 ```
 
-> **Interview Tip**: Dead-band filtering is critical in industrial environments. A temperature sensor might fluctuate ±0.5°C due to electrical noise. Without dead-band, you'd get thousands of useless notifications per second. A dead-band of 5.0 means "only tell me about *meaningful* changes."
+> **Note**: Dead-band filtering is critical in industrial environments. A temperature sensor might fluctuate ±0.5°C due to electrical noise. Without dead-band, you'd get thousands of useless notifications per second. A dead-band of 5.0 means "only tell me about _meaningful_ changes."
 
 ---
 
@@ -629,7 +662,7 @@ The payload length field is always present in extended frames — no guessing, n
 
 ### 5. Timestamps — Microsecond Precision
 
-> **The problem**: Standard Modbus has no concept of *when* data was captured. If you read a temperature register, you don't know if it was sampled 1ms ago or 10 seconds ago. For process control and data logging, this is unacceptable.
+> **The problem**: Standard Modbus has no concept of _when_ data was captured. If you read a temperature register, you don't know if it was sampled 1ms ago or 10 seconds ago. For process control and data logging, this is unacceptable.
 
 ```mermaid
 graph LR
@@ -721,12 +754,13 @@ pipeline.poll();  // Process all 16 responses
 ```
 
 **Implementation details**:
+
 - `CorrelationIDGenerator` — atomic monotonic counter (thread-safe, lock-free)
 - `RequestQueue` — mutex-protected `unordered_map<CorrelationID, PendingRequest>`
 - Automatic timeout expiry detection with callback cleanup
 - Configurable max in-flight (default: 16)
 
-> **Interview Tip**: This is analogous to HTTP/2 multiplexing or TCP pipelining. The key insight is that Modbus responses are independent — there's no reason to wait for response 1 before sending request 2. The correlation ID solves the ordering problem.
+> **Note**: This is analogous to HTTP/2 multiplexing or TCP pipelining. The key insight is that Modbus responses are independent — there's no reason to wait for response 1 before sending request 2. The correlation ID solves the ordering problem.
 
 ---
 
@@ -803,7 +837,7 @@ if (result) {
 }
 ```
 
-> **Interview Tip**: `Result<T>` is a variant-based monad, not C++20's `std::expected` (which isn't available in C++17). Modbus communication fails *routinely* — timeouts, CRC errors, device offline. These are expected outcomes, not exceptional situations. Using exceptions for expected failures is both semantically wrong and expensive in the hot path.
+> **Note**: `Result<T>` is a variant-based monad, not C++20's `std::expected` (which isn't available in C++17). Modbus communication fails _routinely_ — timeouts, CRC errors, device offline. These are expected outcomes, not exceptional situations. Using exceptions for expected failures is both semantically wrong and expensive in the hot path.
 
 ---
 
@@ -924,7 +958,7 @@ if (result && result.value().all_succeeded()) {
 }
 ```
 
-> **Interview Tip**: The optimization algorithm is: (1) sort by start address, (2) iterate and merge adjacent ranges if byte orders match. This is O(n log n) at merge time but saves O(n) round-trips at communication time — a massive win when latency dominates.
+> **Note**: The optimization algorithm is: (1) sort by start address, (2) iterate and merge adjacent ranges if byte orders match. This is O(n log n) at merge time but saves O(n) round-trips at communication time — a massive win when latency dominates.
 
 ---
 
@@ -959,7 +993,7 @@ using Temperature = RegisterDescriptor<RegisterType::Float32, 0x0000, 2, ByteOrd
 float temp = SensorMap::decode<0>(raw);  // BADC byte-swap baked into the binary
 ```
 
-> **Interview Tip**: The `constexpr if` dispatch means each byte order compiles to a different, optimal instruction sequence. There's no runtime switch/case, no function pointer, no vtable lookup. The compiler generates exactly the right byte-swap for your specific device, eliminating an entire class of data corruption bugs that plague Modbus deployments.
+> **Note**: The `constexpr if` dispatch means each byte order compiles to a different, optimal instruction sequence. There's no runtime switch/case, no function pointer, no vtable lookup. The compiler generates exactly the right byte-swap for your specific device, eliminating an entire class of data corruption bugs that plague Modbus deployments.
 
 ---
 
@@ -980,12 +1014,12 @@ xychart-beta
     bar [1, 1.5, 2, 2.2]
 ```
 
-| Requests | Sequential (relative) | Pipelined (relative) | Speedup |
-|:--------:|:---------------------:|:--------------------:|:-------:|
-| 1 | 1.0x | 1.0x | 1.0x |
-| 4 | 4.0x | 1.5x | **2.7x** |
-| 8 | 8.0x | 2.0x | **4.0x** |
-| 16 | 16.0x | 2.2x | **7.3x** |
+| Requests | Sequential (relative) | Pipelined (relative) | Speedup  |
+| :------: | :-------------------: | :------------------: | :------: |
+|    1     |         1.0x          |         1.0x         |   1.0x   |
+|    4     |         4.0x          |         1.5x         | **2.7x** |
+|    8     |         8.0x          |         2.0x         | **4.0x** |
+|    16    |         16.0x         |         2.2x         | **7.3x** |
 
 > Sequential time grows linearly O(n). Pipelined time grows sub-linearly — bounded by processing, not latency.
 
@@ -1003,10 +1037,10 @@ xychart-beta
 ```
 
 | Ranges | Individual Round-Trips | Batch Round-Trips | Reduction |
-|:------:|:---------------------:|:-----------------:|:---------:|
-| 5 | 5 | 2 | **60%** |
-| 10 | 10 | 3 | **70%** |
-| 20 | 20 | 5 | **75%** |
+| :----: | :--------------------: | :---------------: | :-------: |
+|   5    |           5            |         2         |  **60%**  |
+|   10   |           10           |         3         |  **70%**  |
+|   20   |           20           |         5         |  **75%**  |
 
 ### HMAC-SHA256 Overhead by Payload Size
 
@@ -1021,11 +1055,11 @@ xychart-beta
 ```
 
 | Payload | Compute (us) | Verify (us) | Total Overhead |
-|:-------:|:------------:|:-----------:|:--------------:|
-| 64 B | ~1.2 | ~1.3 | **~2.5 us** |
-| 256 B | ~2.1 | ~2.2 | **~4.3 us** |
-| 1 KB | ~4.8 | ~5.0 | **~9.8 us** |
-| 4 KB | ~11.5 | ~12.0 | **~23.5 us** |
+| :-----: | :----------: | :---------: | :------------: |
+|  64 B   |     ~1.2     |    ~1.3     |  **~2.5 us**   |
+|  256 B  |     ~2.1     |    ~2.2     |  **~4.3 us**   |
+|  1 KB   |     ~4.8     |    ~5.0     |  **~9.8 us**   |
+|  4 KB   |    ~11.5     |    ~12.0    |  **~23.5 us**  |
 
 > For a typical 64-byte Modbus frame, HMAC adds only **~2.5 microseconds** — negligible compared to network latency (typically 1-10ms).
 
@@ -1041,15 +1075,15 @@ xychart-beta
     bar [45, 62, 180, 210, 85, 95, 420]
 ```
 
-| Operation | Time (ns) | Notes |
-|-----------|:---------:|-------|
-| Standard PDU Serialize | ~45 | Minimal: FC + data copy |
-| Standard PDU Deserialize | ~62 | Parse FC + validate |
-| Extended PDU Serialize | ~180 | Header + flags + optional fields |
-| Extended PDU Deserialize | ~210 | Parse header + conditional fields |
-| TCP Frame Wrap (MBAP) | ~85 | Add 7-byte MBAP header |
-| TCP Frame Unwrap | ~95 | Validate + extract PDU |
-| CRC16 (256 bytes) | ~420 | Table-driven lookup |
+| Operation                | Time (ns) | Notes                             |
+| ------------------------ | :-------: | --------------------------------- |
+| Standard PDU Serialize   |    ~45    | Minimal: FC + data copy           |
+| Standard PDU Deserialize |    ~62    | Parse FC + validate               |
+| Extended PDU Serialize   |   ~180    | Header + flags + optional fields  |
+| Extended PDU Deserialize |   ~210    | Parse header + conditional fields |
+| TCP Frame Wrap (MBAP)    |    ~85    | Add 7-byte MBAP header            |
+| TCP Frame Unwrap         |    ~95    | Validate + extract PDU            |
+| CRC16 (256 bytes)        |   ~420    | Table-driven lookup               |
 
 ### Type Codec Performance Across Byte Orders
 
@@ -1081,22 +1115,22 @@ pie title "Extended Frame Overhead (bytes per feature)"
 
 ## Comparison: Standard Modbus vs modbus_pp
 
-| Aspect | Standard Modbus | modbus_pp | Winner |
-|--------|:-:|:-:|:-:|
-| **Authentication** | None | HMAC-SHA256 challenge-response | modbus_pp |
-| **Data Types** | 16-bit registers only | float, double, int32, string, struct | modbus_pp |
-| **Event Model** | Poll (client asks repeatedly) | Push (server notifies on change) | modbus_pp |
-| **Max Payload** | 253 bytes | 65,535 bytes | modbus_pp |
-| **Timestamps** | None | Microsecond resolution | modbus_pp |
-| **Concurrency** | 1 request at a time | 16 pipelined requests | modbus_pp |
-| **Error Codes** | 9 codes | 25+ codes with std::error_code | modbus_pp |
-| **Discovery** | Manual configuration | Broadcast scan with capabilities | modbus_pp |
-| **Batch Ops** | One range per request | Multi-range with auto-merge | modbus_pp |
-| **Byte Order** | Guess and pray | Compile-time selection | modbus_pp |
-| **Error Handling** | Exceptions or ad-hoc | Result\<T\> monad | modbus_pp |
-| **Wire Compatibility** | N/A | 100% backward compatible | Tie |
-| **Dependencies** | Varies | OpenSSL + POSIX (minimal) | Tie |
-| **C++ Standard** | Varies | C++17 (no C++20 needed) | Tie |
+| Aspect                 |        Standard Modbus        |              modbus_pp               |  Winner   |
+| ---------------------- | :---------------------------: | :----------------------------------: | :-------: |
+| **Authentication**     |             None              |    HMAC-SHA256 challenge-response    | modbus_pp |
+| **Data Types**         |     16-bit registers only     | float, double, int32, string, struct | modbus_pp |
+| **Event Model**        | Poll (client asks repeatedly) |   Push (server notifies on change)   | modbus_pp |
+| **Max Payload**        |           253 bytes           |             65,535 bytes             | modbus_pp |
+| **Timestamps**         |             None              |        Microsecond resolution        | modbus_pp |
+| **Concurrency**        |      1 request at a time      |        16 pipelined requests         | modbus_pp |
+| **Error Codes**        |            9 codes            |    25+ codes with std::error_code    | modbus_pp |
+| **Discovery**          |     Manual configuration      |   Broadcast scan with capabilities   | modbus_pp |
+| **Batch Ops**          |     One range per request     |     Multi-range with auto-merge      | modbus_pp |
+| **Byte Order**         |        Guess and pray         |        Compile-time selection        | modbus_pp |
+| **Error Handling**     |     Exceptions or ad-hoc      |          Result\<T\> monad           | modbus_pp |
+| **Wire Compatibility** |              N/A              |       100% backward compatible       |    Tie    |
+| **Dependencies**       |            Varies             |      OpenSSL + POSIX (minimal)       |    Tie    |
+| **C++ Standard**       |            Varies             |       C++17 (no C++20 needed)        |    Tie    |
 
 ```mermaid
 quadrantChart
@@ -1119,12 +1153,12 @@ quadrantChart
 
 ### Prerequisites
 
-| Requirement | Minimum Version |
-|-------------|:-:|
+| Requirement  |         Minimum Version         |
+| ------------ | :-----------------------------: |
 | C++ Compiler | GCC 7+ / Clang 5+ / MSVC 19.14+ |
-| CMake | 3.14+ |
-| OpenSSL | libcrypto (any recent version) |
-| pthreads | Standard on Linux/macOS |
+| CMake        |              3.14+              |
+| OpenSSL      | libcrypto (any recent version)  |
+| pthreads     |     Standard on Linux/macOS     |
 
 ### Build
 
@@ -1153,13 +1187,13 @@ cd build && ctest --output-on-failure
 
 ### Build Options
 
-| Option | Default | Description |
-|--------|:-------:|-------------|
-| `MODBUS_PP_BUILD_TESTS` | ON | Build unit and integration tests (13 suites) |
-| `MODBUS_PP_BUILD_BENCHMARKS` | ON | Build performance benchmarks (5 programs) |
-| `MODBUS_PP_BUILD_EXAMPLES` | ON | Build example programs (7 examples) |
-| `MODBUS_PP_ENABLE_ASAN` | OFF | Enable AddressSanitizer |
-| `MODBUS_PP_ENABLE_TSAN` | OFF | Enable ThreadSanitizer |
+| Option                       | Default | Description                                  |
+| ---------------------------- | :-----: | -------------------------------------------- |
+| `MODBUS_PP_BUILD_TESTS`      |   ON    | Build unit and integration tests (13 suites) |
+| `MODBUS_PP_BUILD_BENCHMARKS` |   ON    | Build performance benchmarks (5 programs)    |
+| `MODBUS_PP_BUILD_EXAMPLES`   |   ON    | Build example programs (7 examples)          |
+| `MODBUS_PP_ENABLE_ASAN`      |   OFF   | Enable AddressSanitizer                      |
+| `MODBUS_PP_ENABLE_TSAN`      |   OFF   | Enable ThreadSanitizer                       |
 
 ### Minimal Example — Client/Server with Loopback
 
@@ -1350,19 +1384,19 @@ modbus_pp/
 
 ## Glossary
 
-| Term | Definition |
-|------|------------|
-| **PDU** | Protocol Data Unit — the core frame payload (function code + data) |
-| **ADU** | Application Data Unit — PDU wrapped with transport headers (MBAP for TCP, CRC for RTU) |
-| **MBAP** | Modbus Application Protocol header — 7-byte TCP wrapper with transaction ID |
-| **RTU** | Remote Terminal Unit — serial Modbus framing with CRC16 |
-| **FC** | Function Code — the operation type (read, write, etc.) |
-| **Register** | A 16-bit (2-byte) data cell — the fundamental Modbus storage unit |
-| **Unit ID** | Device address on the Modbus bus (1-247) |
-| **CRC16** | 16-bit Cyclic Redundancy Check — error detection for RTU frames |
-| **HMAC** | Hash-based Message Authentication Code — proves message integrity and sender identity |
-| **Dead-band** | Minimum change threshold before a notification is triggered |
-| **Correlation ID** | Unique tag matching pipelined requests to their responses |
+| Term               | Definition                                                                             |
+| ------------------ | -------------------------------------------------------------------------------------- |
+| **PDU**            | Protocol Data Unit — the core frame payload (function code + data)                     |
+| **ADU**            | Application Data Unit — PDU wrapped with transport headers (MBAP for TCP, CRC for RTU) |
+| **MBAP**           | Modbus Application Protocol header — 7-byte TCP wrapper with transaction ID            |
+| **RTU**            | Remote Terminal Unit — serial Modbus framing with CRC16                                |
+| **FC**             | Function Code — the operation type (read, write, etc.)                                 |
+| **Register**       | A 16-bit (2-byte) data cell — the fundamental Modbus storage unit                      |
+| **Unit ID**        | Device address on the Modbus bus (1-247)                                               |
+| **CRC16**          | 16-bit Cyclic Redundancy Check — error detection for RTU frames                        |
+| **HMAC**           | Hash-based Message Authentication Code — proves message integrity and sender identity  |
+| **Dead-band**      | Minimum change threshold before a notification is triggered                            |
+| **Correlation ID** | Unique tag matching pipelined requests to their responses                              |
 
 ---
 
@@ -1376,6 +1410,6 @@ MIT License. See [LICENSE](LICENSE) for details.
 
 **Built with modern C++17. No Boost. No exceptions in the hot path. No compromises on compatibility.**
 
-*~4,300 lines of code | 7 modules | 13 test suites | 5 benchmarks | 7 examples*
+_~4,300 lines of code | 7 modules | 13 test suites | 5 benchmarks | 7 examples_
 
 </div>
