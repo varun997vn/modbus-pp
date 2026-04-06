@@ -1,0 +1,13 @@
+function(add_modbus_pp_example EX_NAME EX_SOURCE)
+    add_executable(${EX_NAME} ${EX_SOURCE})
+    target_link_libraries(${EX_NAME} PRIVATE modbus_pp)
+    target_compile_options(${EX_NAME} PRIVATE -Wall -Wextra -Wpedantic)
+endfunction()
+
+add_modbus_pp_example(ex_01_basic_client_server   01_basic_client_server.cpp)
+add_modbus_pp_example(ex_02_typed_registers       02_typed_registers.cpp)
+add_modbus_pp_example(ex_03_batch_operations      03_batch_operations.cpp)
+add_modbus_pp_example(ex_04_pipeline_throughput   04_pipeline_throughput.cpp)
+add_modbus_pp_example(ex_05_pubsub_events         05_pubsub_events.cpp)
+add_modbus_pp_example(ex_06_security_hmac         06_security_hmac.cpp)
+add_modbus_pp_example(ex_07_endian_byte_orders    07_endian_byte_orders.cpp)
