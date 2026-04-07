@@ -11,15 +11,15 @@ const config = {
   favicon: "img/favicon.ico",
 
   // Set the production url of your site here
-  url: "https://github.com",
+  url: "https://varun997vn.github.io",
   // Set the /<baseUrl>/ pathname under which your site is served
   // For GitHub pages deployment, it is often '/<projectName>/'
-  baseUrl: "/modbus_pp/",
+  baseUrl: "/modbus-pp/",
 
   // GitHub pages deployment config.
   // If you aren't using GitHub pages, you don't need these.
-  organizationName: "varuvenk",
-  projectName: "modbus_pp",
+  organizationName: "varun997vn",
+  projectName: "modbus-pp",
   deploymentBranch: "gh-pages",
 
   onBrokenLinks: "warn",
@@ -40,7 +40,7 @@ const config = {
       ({
         docs: {
           sidebarPath: "./sidebars.js",
-          editUrl: "https://github.com/varuvenk/modbus_pp/tree/main/docusaurus",
+          editUrl: "https://github.com/varun997vn/modbus-pp/tree/main/docusaurus",
           showLastUpdateAuthor: false,
           showLastUpdateTime: false,
         },
@@ -70,7 +70,7 @@ const config = {
             label: "Docs",
           },
           {
-            href: "https://github.com/varuvenk/modbus_pp",
+            href: "https://github.com/varun997vn/modbus-pp",
             label: "GitHub",
             position: "right",
           },
@@ -122,7 +122,7 @@ const config = {
             items: [
               {
                 label: "GitHub Repository",
-                href: "https://github.com/varuvenk/modbus_pp",
+                href: "https://github.com/varun997vn/modbus-pp",
               },
               {
                 label: "MIT License",
