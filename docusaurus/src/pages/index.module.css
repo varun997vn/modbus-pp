@@ -1,0 +1,270 @@
+/* Hero */
+.hero {
+  background: linear-gradient(135deg, #0d47a1 0%, #1e90ff 60%, #4da6ff 100%);
+  padding: 5rem 1rem 4rem;
+  text-align: center;
+  color: white;
+}
+
+.heroInner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.heroBadge {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  padding: 0.25rem 1rem;
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 1.5rem;
+}
+
+.heroTitle {
+  font-size: 3.5rem;
+  font-weight: 900;
+  margin: 0 0 1rem;
+  color: white;
+  font-family: monospace;
+}
+
+.heroSubtitle {
+  font-size: 1.2rem;
+  line-height: 1.7;
+  opacity: 0.92;
+  margin-bottom: 2rem;
+}
+
+.heroStats {
+  display: flex;
+  justify-content: center;
+  gap: 2.5rem;
+  margin-bottom: 2.5rem;
+  flex-wrap: wrap;
+}
+
+.stat span {
+  display: block;
+  font-size: 2rem;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.stat label {
+  font-size: 0.8rem;
+  opacity: 0.75;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.heroButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btnPrimary {
+  background: white;
+  color: #0d47a1;
+  font-weight: 700;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: opacity 0.15s;
+}
+
+.btnPrimary:hover {
+  opacity: 0.88;
+  color: #0d47a1;
+  text-decoration: none;
+}
+
+.btnSecondary {
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btnSecondary:hover {
+  background: rgba(255, 255, 255, 0.25);
+  color: white;
+  text-decoration: none;
+}
+
+.btnGhost {
+  background: transparent;
+  color: white;
+  font-weight: 600;
+  padding: 0.75rem 2rem;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.btnGhost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  text-decoration: none;
+}
+
+/* Shared container */
+.container {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Install section */
+.install {
+  padding: 3rem 1rem;
+  background: var(--ifm-color-emphasis-100);
+  text-align: center;
+}
+
+.install h2 {
+  margin-bottom: 1.25rem;
+}
+
+.installCode {
+  display: inline-block;
+  text-align: left;
+  background: #1a1a2e;
+  color: #a8d4ff;
+  padding: 1.25rem 2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.8;
+  margin: 0;
+}
+
+/* Features */
+.featuresSection {
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.featuresSection h2 {
+  margin-bottom: 2.5rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.5rem;
+  text-align: left;
+}
+
+.feature {
+  border: 1px solid var(--ifm-color-emphasis-200);
+  border-radius: 10px;
+  padding: 1.5rem;
+  transition: box-shadow 0.15s;
+}
+
+.feature:hover {
+  box-shadow: 0 4px 16px rgba(30, 144, 255, 0.12);
+}
+
+.feature h3 {
+  color: var(--ifm-color-primary);
+  margin-bottom: 0.5rem;
+  font-size: 1rem;
+}
+
+.feature p {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.6;
+  color: var(--ifm-color-emphasis-700);
+}
+
+/* Problems table */
+.problemsSection {
+  padding: 4rem 1rem;
+  background: var(--ifm-color-emphasis-100);
+  text-align: center;
+}
+
+.problemsSection h2 {
+  margin-bottom: 0.75rem;
+}
+
+.problemsSubtitle {
+  margin-bottom: 2rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.problemsTable {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.93rem;
+}
+
+.problemsTable thead tr {
+  background: var(--ifm-color-primary);
+  color: white;
+}
+
+.problemsTable th,
+.problemsTable td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--ifm-color-emphasis-200);
+}
+
+.problemsTable tbody tr:hover {
+  background: var(--ifm-color-emphasis-200);
+}
+
+/* CTA */
+.cta {
+  padding: 4rem 1rem;
+  text-align: center;
+}
+
+.cta h2 {
+  margin-bottom: 0.75rem;
+}
+
+.cta p {
+  margin-bottom: 2rem;
+  color: var(--ifm-color-emphasis-700);
+}
+
+.ctaButtons {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.ctaButtons .btnPrimary {
+  background: var(--ifm-color-primary);
+  color: white;
+}
+
+.ctaButtons .btnPrimary:hover {
+  background: var(--ifm-color-primary-dark);
+  color: white;
+}
+
+.ctaButtons .btnSecondary {
+  background: transparent;
+  color: var(--ifm-color-primary);
+  border: 1px solid var(--ifm-color-primary);
+}
+
+.ctaButtons .btnSecondary:hover {
+  background: var(--ifm-color-primary);
+  color: white;
+}
