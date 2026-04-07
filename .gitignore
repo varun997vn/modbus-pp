@@ -23,5 +23,4 @@ Thumbs.db
 docusaurus/node_modules/
 docusaurus/build/
 docusaurus/.docusaurus/
-docusaurus/package-lock.json
 docusaurus/build.log
